@@ -1493,9 +1493,49 @@ def plan_comparison(zipcode):
     return data
 
         
+def process_zipcode(zipcode, data_type):
+    try:
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+        
+        if data_type == 'hospitals':
+            links = actions(driver, zipcode, mode='hospitals')
+            data = extract_hospitals(links, zipcode)
+            df = pd.DataFrame(data)
+            df.to_csv(f"provider_data_hospitals_{zipcode}.csv", index=False)
+        elif data_type == 'pharmacists':
+            links = actions(driver, zipcode, mode='pharmacists')
+            data = extract(driver, links, zipcode)
+            df = pd.DataFrame(data)
+            df.to_csv(f"provider_data_pharmacists_{zipcode}.csv", index=False)
+        elif data_type == 'medicare_plans':
+            plan_comparison(zipcode)
+        
+        pprint(data)
+        
+    except Exception as e:
+        print(f"Error processing {zipcode}: {e}")
+        
+        data = {
+            'name': "NULL",
+            'address_1':  "NULL",
+            'address_2':  "NULL",
+            'provider number 1':  "NULL",
+            'provider number 2':  "NULL",
+            'specialties':  "NULL",
+            'consetion':  "NULL",
+            'educations':  "NULL",
+            'genders':  "NULL",
+            'zipcode': zipcode,
+            'url':  "NULL"
+        }
+        
+        df = pd.DataFrame([data])
+        df.to_csv(f"provider_data_{data_type}_{zipcode}.csv", index=False)
+        
+    finally:
+        driver.quit()
+
 if __name__ == "__main__":
-    # plan_comparison("33101")
-    # List of zip codes to process
     zipcodes = [
         "33101", "33125", "33126", "33127", "33128", "33129", "33130", "33131", "33132", "33133",
         "32801", "32803", "32804", "32805", "32806", "32807", "32808", "32809", "32810", "32811",
@@ -1506,121 +1546,15 @@ if __name__ == "__main__":
         "00612", "00613", "00614"
     ]
     
-    # zipcodes = [
-    #     '33128'
-    # ]
-    
-    def process_zipcode(zipcode):
-        # driver = set_driver()
-        try:
-        #    data = plan_comparison(zipcode)
-           
-        #    print(f"Data for Zipcode: {zipcode}")
-        #    pprint(data)
-           
-        #    # Iterate through each key-value pair in the data dictionary
-        #    for key, value in data.items():
-        #        # Calculate the length of the list
-        #        length = len(value)
-        #        # Print the key and the length of the list
-        #        print(f"The length of '{key}' list is: {length}")
+    data_type = input("Enter the type of data to extract (hospitals, pharmacists, medicare_plans): ").strip().lower()
 
-        #    df = pd.DataFrame(data)
-        #    # Write the DataFrame to a CSV file
-        #    df.to_csv(f"provider_data_plan_comparison_1_{zipcode}.csv", index=False)
-            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-            
-            ph_links = actions(driver, zipcode)
-            
-            print(ph_links)
-            print(f"Total Links => {len(ph_links)}")
-            ph_data = extract(driver, ph_links, zipcode)
-            df = pd.DataFrame(ph_data)
-            
-            pprint(ph_data)
-            # Write the DataFrame to a CSV file
-            df.to_csv(f"provider_data_physicians_{zipcode}.csv", index=False)
-            
-        except:
-            print(f"Error processing {zipcode}")
-            
-            ph_data = {
-                'name': "NULL",
-                'address_1':  "NULL",
-                'address_2':  "NULL",
-                'provider number 1':  "NULL",
-                'provider number 2':  "NULL",
-                'specialties':  "NULL",
-                'consetion':  "NULL",
-                'educations':  "NULL",
-                'genders':  "NULL",
-                'zipcode': zipcode,
-                'url':  "NULL"
-            }
-            
-            pprint(ph_data)
-            df = pd.DataFrame(ph_data)
-            # Write the DataFrame to a CSV file
-            df.to_csv(f"provider_data_physicians_{zipcode}.csv", index=False) 
-            
-            driver.quit()
-            
-        # finally:
-        #     driver.quit()
-            
     threads = []
     for i in range(0, len(zipcodes), 4):
         for j in range(i, min(i + 4, len(zipcodes))):
-            thread = threading.Thread(target=process_zipcode, args=(zipcodes[j],))
+            thread = threading.Thread(target=process_zipcode, args=(zipcodes[j], data_type))
             threads.append(thread)
             thread.start()        
         
         for thread in threads:
             thread.join()
         threads = []
-
-    # zipcode = "00962"
-
-    # driver = set_driver()
-    # plan_comparison(zipcode)
-
-    # driver.quit()
-    # For Hospitals
-    # hosp_links = actions(driver, zipcode, mode='hospitals')
-    # print(hosp_links)
-    # print(f"Total Links => {len(hosp_links)}")
-    # hosp_data = extract_hospitals(links, zipcode)
-    # print(hosp_data)
-    # print(len(hosp_data))
-
-    # hosp_data_df = pd.DataFrame(hosp_data)
-
-    # Write the DataFrame to a CSV file
-    # csv_filename = f'provider_data_hospitals_{zipcode}.csv'
-    # hosp_data_df.to_csv(csv_filename, index=False)
-    # print(f"hosp_data_df saved to {csv_filename}")
-
-    # For Physicians
-    # ph_links = actions(driver, zipcode)
-    # print(ph_links)
-    # print(f"Total Links => {len(ph_links)}")
-    # ph_data = extract_hospitals(links, zipcode)
-    # print(ph_data)
-    # print(len(ph_data))
-
-    # ph_data_df = pd.DataFrame(pharma_data)
-
-    # Write the DataFrame to a CSV file
-    # csv_filename = f'provider_data_physicians_{zipcode}.csv'
-    # ph_data_df.to_csv(csv_filename, index=False)
-    # print(f"ph_data_df saved to {csv_filename}")
-
-    # FOR PLAN Comparison
-    # plan_comparison(zipcode)
-
-    # driver.quit()
-
-    # For Hospitals
-    # links = actions(driver, zipcode, mode="hospitals")
-    # print(links)
-    # print(f"Total Links => {len(links)}")
